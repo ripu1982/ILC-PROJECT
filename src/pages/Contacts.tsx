@@ -178,7 +178,7 @@ export default function Contacts() {
   useEffect(() => {
   async function loadContacts() {
     try {
-      const res = await fetch("http://localhost:4000/api/contacts");
+      const res = await fetch("http://13.201.76.47/api/contacts");
       const data = await res.json();
 
       const normalized = (Array.isArray(data) ? data : [])
