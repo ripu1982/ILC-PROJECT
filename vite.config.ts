@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080, // frontend
     proxy: {
       "/api": {
-        target: "http://localhost:4000", // 👈 your backend port
+        target: "http://13.201.76.47:4000", // 👈 your backend port
         changeOrigin: true,
         secure: false,
       },
