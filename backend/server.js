@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:8080", // your React app
+    origin: ["http://13.201.76.47", "http://localhost:8080"], // your React app
     credentials: true,
   })
 );
