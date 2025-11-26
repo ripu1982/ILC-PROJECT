@@ -367,7 +367,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
               });
 
             for (const c of newContacts) {
-              await fetch("http://localhost:4000/api/contacts", {
+              await fetch("http://13.201.76.47/api/contacts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(c),
@@ -866,7 +866,7 @@ const fileInputRef = useRef<HTMLInputElement>(null);
               const dnd = false;
               const vip = false;
 
-              const res = await fetch("http://localhost:4000/api/contacts", {
+              const res = await fetch("http://13.201.76.47/api/contacts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name, email, phone, location, notes, tags, channel, consent, dnd, vip }),
