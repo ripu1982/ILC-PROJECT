@@ -37,7 +37,7 @@ type MessageItem = {
 // ----------------------------
 // 🔵 ENV CONFIG (Fixes missing name)
 // ----------------------------
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://13.201.76.47";
 const FACEBOOK_PAGE_ID: string =
   import.meta.env.VITE_FACEBOOK_PAGE_ID || ""; // ❗ avoids TS error
 

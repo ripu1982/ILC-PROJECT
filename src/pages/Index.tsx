@@ -37,7 +37,7 @@ const Index = () => {
   };
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/facebook/page-info")
+    fetch("http://13.201.76.47/api/facebook/page-info")
       .then(res => res.json())
       .then((data) => {
         setAccounts([

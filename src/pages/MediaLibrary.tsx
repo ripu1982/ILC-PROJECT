@@ -117,7 +117,7 @@ export default function MediaLibrary() {
   formData.append("tags", JSON.stringify(["uploaded"]));
 
   try {
-    const res = await fetch("http://localhost:4000/api/media/upload", {
+    const res = await fetch("http://13.201.76.47/api/media/upload", {
       method: "POST",
       body: formData,
     });
@@ -128,14 +128,14 @@ export default function MediaLibrary() {
     toast({ title: "Uploaded!", description: data.message });
 
     // ✅ refresh media after upload
-    const refresh = await fetch("http://localhost:4000/api/media");
+    const refresh = await fetch("http://13.201.76.47/api/media");
     const updated = await refresh.json();
     setMedia(
       updated.map((m) => ({
         id: m.id,
         name: m.name,
         type: m.type,
-        url: `http://localhost:4000${m.url}`,
+        url: `http://13.201.76.47${m.url}`,
         size: m.size,
         uploadedAt: m.uploadedAt,
         tags: Array.isArray(m.tags) ? m.tags : JSON.parse(m.tags || "[]"),
@@ -171,7 +171,7 @@ export default function MediaLibrary() {
   useEffect(() => {
   const fetchMedia = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/media");
+      const res = await fetch("http://13.201.76.47/api/media");
       if (!res.ok) throw new Error("Failed to fetch media");
       const data = await res.json();
       setMedia(
@@ -179,7 +179,7 @@ export default function MediaLibrary() {
           id: m.id,
           name: m.name,
           type: m.type,
-          url: `http://localhost:4000${m.url}`, // ✅ full URL
+          url: `http://13.201.76.47${m.url}`, // ✅ full URL
           size: m.size,
           uploadedAt: m.uploadedAt,
           tags: Array.isArray(m.tags) ? m.tags : JSON.parse(m.tags || "[]"),
