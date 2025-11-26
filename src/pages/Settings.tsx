@@ -85,7 +85,7 @@ const Settings = () => {
               <TabsTrigger value="team">Team</TabsTrigger>
               <TabsTrigger value="notifications">Notifications</TabsTrigger>
               <TabsTrigger value="security">Security</TabsTrigger>
-              <TabsTrigger value="billing">Billing</TabsTrigger>
+              {/*<TabsTrigger value="billing">Billing</TabsTrigger>*/}
             </TabsList>
 
             <TabsContent value="general" className="mt-6 space-y-6">
