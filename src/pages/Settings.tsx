@@ -363,7 +363,7 @@ const Settings = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="billing" className="mt-6">
+            {/*<TabsContent value="billing" className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Current Plan</CardTitle>
@@ -393,7 +393,7 @@ const Settings = () => {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </TabsContent>*/}
           </Tabs>
         </div>
       </main>
