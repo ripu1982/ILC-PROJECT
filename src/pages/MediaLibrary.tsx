@@ -81,6 +81,8 @@ const mockMedia: MediaAsset[] = [
     tags: ["document", "presentation"]
   }
 ];
+const BASE_URL = "http://13.201.76.47";
+
 
 export default function MediaLibrary() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -135,7 +137,8 @@ export default function MediaLibrary() {
         id: m.id,
         name: m.name,
         type: m.type,
-        url: `http://13.201.76.47${m.url}`,
+        //url: `http://13.201.76.47${m.url}`,
+        url: `${BASE_URL}${m.url}`,
         size: m.size,
         uploadedAt: m.uploadedAt,
         tags: Array.isArray(m.tags) ? m.tags : JSON.parse(m.tags || "[]"),
@@ -179,7 +182,8 @@ export default function MediaLibrary() {
           id: m.id,
           name: m.name,
           type: m.type,
-          url: `http://13.201.76.47${m.url}`, // ✅ full URL
+          //url: `http://13.201.76.47${m.url}`, // ✅ full URL
+          url: `${BASE_URL}${m.url}`,
           size: m.size,
           uploadedAt: m.uploadedAt,
           tags: Array.isArray(m.tags) ? m.tags : JSON.parse(m.tags || "[]"),
