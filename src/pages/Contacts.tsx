@@ -40,6 +40,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ChatWindow from "@/components/ChatWindow";
+
 
 interface Contact {
   id: string;
@@ -57,6 +59,7 @@ interface Contact {
   vip: boolean;
   interactions: number;
 }
+
 
 const mockContacts: Contact[] = [
   {
@@ -157,6 +160,7 @@ export default function Contacts() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const { toast } = useToast();
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const currentPath = "/contacts";
 
   const allTags = Array.from(new Set(contacts.flatMap(c => c.tags)));
@@ -775,9 +779,9 @@ const fileInputRef = useRef<HTMLInputElement>(null);
             <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
               Close
             </Button>
-            <Button>
+            <Button onClick={() => setIsChatOpen(true)}>
               <MessageSquare className="w-4 h-4 mr-2" />
-              Send Message
+              Open Chat
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -839,6 +843,16 @@ const fileInputRef = useRef<HTMLInputElement>(null);
             </div>
           </div>
 
+          {isChatOpen && selectedContact && (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+              <ChatWindow 
+                contact={selectedContact}
+                onClose={() => setIsChatOpen(false)}
+              />
+            </div>
+          )}
+
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddOpen(false)}>
               Cancel
@@ -880,6 +894,15 @@ const fileInputRef = useRef<HTMLInputElement>(null);
             }}
           >
             Add Contact
+          </Button>
+
+          <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
+            Close
+          </Button>
+
+          <Button onClick={() => setIsChatOpen(true)}>
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Chat
           </Button>
 
           </DialogFooter>
