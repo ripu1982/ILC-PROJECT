@@ -47,6 +47,7 @@ router.post("/send", async (req, res) => {
       headers: {
         wabaNumber: WABA_NUMBER,
         Key: WABA_KEY,
+        campaignId: process.env.WABA_CAMPAIGN_ID,
         "Content-Type": "application/json"
       },
       timeout: 15000
