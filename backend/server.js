@@ -71,31 +71,29 @@ app.get("/api/facebook/page-info", async (req, res) => {
 // create socket.io server
 const io = new IOServer(server, {
   cors: {
-    origin: process.env.PUBLIC_ORIGIN || "*",
-    methods: ["GET", "POST"]
+    origin: "*",
+    methods: ["GET", "POST"],
   }
 });
 
 io.on("connection", (socket) => {
-  console.log("Socket connected:", socket.id);
+  console.log("⚡ Socket connected:", socket.id);
 
-  // admin subscribes to contact room: socket.emit('join_contact', contact_id)
   socket.on("join_contact", (contact_id) => {
     socket.join(`contact_${contact_id}`);
-    console.log("Joined room contact_", contact_id);
+    console.log("📌 Joined room:", `contact_${contact_id}`);
   });
 
   socket.on("leave_contact", (contact_id) => {
     socket.leave(`contact_${contact_id}`);
   });
 
-  // global admin inbox
   socket.on("join_admin_inbox", () => {
     socket.join("admin_inbox");
   });
 
   socket.on("disconnect", () => {
-    // handle cleanup
+    console.log("❌ Socket disconnected:", socket.id);
   });
 });
 
@@ -103,8 +101,11 @@ io.on("connection", (socket) => {
 app.set("io", io);
 
 // Health check
-app.get("/", (req, res) => res.send("Backend running..."));
+app.get("/", (req, res) => res.send("Backend + Socket.IO Running OK 🚀"));
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
+//app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => {
+  console.log(`🚀 Server + WebSocket running at http://localhost:${PORT}`);
+});
