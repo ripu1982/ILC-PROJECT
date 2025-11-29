@@ -8,7 +8,7 @@ import { MessageSquare } from "lucide-react";
 import { Contact } from "@/types/contact";
 
 
-const SOCKET_URL = (process.env.NEXT_PUBLIC_SOCKET_URL || "http://13.201.76.47:4000");
+const SOCKET_URL = "http://13.201.76.47";
 
 interface ChatMessage {
   from: "admin" | "user";
