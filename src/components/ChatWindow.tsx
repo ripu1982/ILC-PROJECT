@@ -1,7 +1,6 @@
 // components/ChatWindow.tsx
 import React, { useEffect, useState, useRef } from "react";
-import io from "socket.io-client";
-import { Socket } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import { Button } from "@/components/ui/button"; // adjust imports to your UI library
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";

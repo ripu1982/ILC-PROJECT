@@ -842,17 +842,6 @@ const fileInputRef = useRef<HTMLInputElement>(null);
               <Textarea id="notes-input" placeholder="Additional notes about this contact..." rows={4} />
             </div>
           </div>
-
-          {isChatOpen && selectedContact && (
-            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-              <ChatWindow 
-                contact={selectedContact}
-                onClose={() => setIsChatOpen(false)}
-              />
-            </div>
-          )}
-
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddOpen(false)}>
               Cancel
@@ -908,6 +897,15 @@ const fileInputRef = useRef<HTMLInputElement>(null);
           </DialogFooter>
         </DialogContent>
       </Dialog>
+       {isChatOpen && selectedContact && (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+              <ChatWindow 
+                contact={selectedContact}
+                onClose={() => setIsChatOpen(false)}
+              />
+            </div>
+          )}
+
     </div>
   );
 }
