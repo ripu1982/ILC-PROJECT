@@ -1,242 +1,180 @@
 // routes/waba.js
 import express from "express";
 import axios from "axios";
-import multer from "multer";
-import FormData from "form-data";
-import fs from "fs";
 import { pool } from "../db.js";
 
 const router = express.Router();
 
-const WABA_URL = process.env.WABA_API_URL;                       // message send API
+const WABA_URL = process.env.WABA_API_URL;
 const WABA_NUMBER = process.env.WABA_NUMBER;
 const WABA_KEY = process.env.WABA_API_KEY;
 
-const WORKFLOW_ID = process.env.WABA_WORKFLOW_ID || "";          // required for delivery
-const DEFAULT_CAMPAIGN_ID = process.env.WABA_CAMPAIGN_ID || "";  // optional fallback
+// Your template name
+const TEMPLATE_NAME = "ilcpromo";
 
-// -----------------------------
-// UTIL: Clean mobile number
-// -----------------------------
 function cleanNumber(n) {
-  return String(n || "").replace(/\D/g, "");
+  if (!n) return "";
+  return String(n).replace(/\D/g, "");
 }
 
-// -----------------------------
-// UTIL: Save message record
-// -----------------------------
 async function saveMessageRecord({
   contact_id = null,
   from_type = "admin",
-  from_number = null,
-  to_number = null,
   message,
   message_type = "text",
-  waba_message_id = null,
   status = "sent",
+  waba_message_id = null,
+  to_number = null,
+  from_number = null
 }) {
   try {
     await pool.query(
-      `INSERT INTO messages 
-      (contact_id, from_type, from_number, to_number, message, message_type, waba_message_id, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        contact_id,
-        from_type,
-        from_number,
-        to_number,
-        message,
-        message_type,
-        waba_message_id,
-        status,
-      ]
+      `INSERT INTO messages (contact_id, from_type, from_number, to_number, message, message_type, waba_message_id, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [contact_id, from_type, from_number, to_number, message, message_type, waba_message_id, status]
     );
   } catch (err) {
-    console.error("saveMessageRecord error:", err);
+    console.log("DB insert error", err);
   }
 }
 
-// =======================================================
-// 1️⃣ SEND SIMPLE TEXT MESSAGE
-// =======================================================
-router.post("/send", async (req, res) => {
-  const { to, message, contact_id } = req.body;
+// Check if 24-hour session is active
+async function isSessionActive(contact_id) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT created_at FROM messages
+       WHERE contact_id = ? AND from_type = 'user'
+       ORDER BY created_at DESC LIMIT 1`,
+      [contact_id]
+    );
 
-  if (!to || !message)
-    return res.status(400).json({ error: "to & message required" });
+    if (!rows.length) return false;
 
+    const lastUserMessage = new Date(rows[0].created_at);
+    const diffHours =
+      (Date.now() - lastUserMessage.getTime()) / (1000 * 60 * 60);
+
+    return diffHours < 24;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Send template message (to open session)
+async function sendTemplate(to) {
   const payload = {
     messaging_product: "whatsapp",
-    to: cleanNumber(to),
-    type: "text",
-    text: { body: message },
+    to,
+    type: "template",
+    template: {
+      name: TEMPLATE_NAME,
+      language: { code: "en" }
+    }
   };
 
-  try {
-    const response = await axios.post(WABA_URL, payload, {
-      headers: {
-        Key: WABA_KEY,
-        wabaNumber: WABA_NUMBER,
-        //workflowId: WORKFLOW_ID,
-        //campaignId: DEFAULT_CAMPAIGN_ID,
-        "Content-Type": "application/json",
-      },
-    });
+  const resp = await axios.post(WABA_URL, payload, {
+    headers: {
+      Key: WABA_KEY,
+      wabaNumber: WABA_NUMBER,
+      "Content-Type": "application/json"
+    }
+  });
 
-    const waba_message_id =
-      response.data?.messages?.[0]?.id || response.data?.id || null;
+  return resp.data;
+}
+
+// Send text message after session is open
+async function sendText(to, message) {
+  const payload = {
+    messaging_product: "whatsapp",
+    to,
+    type: "text",
+    text: { body: message }
+  };
+
+  const resp = await axios.post(WABA_URL, payload, {
+    headers: {
+      Key: WABA_KEY,
+      wabaNumber: WABA_NUMBER,
+      "Content-Type": "application/json"
+    }
+  });
+
+  return resp.data;
+}
+
+// MAIN SEND ENDPOINT
+router.post("/send", async (req, res) => {
+  try {
+    const { to, message, contact_id } = req.body;
+
+    if (!to || !message)
+      return res.status(400).json({ error: "to & message required" });
+
+    const toClean = cleanNumber(to);
+
+    // 1️⃣ Check if 24h session is active
+    const sessionActive = await isSessionActive(contact_id);
+
+    let templateResponse = null;
+
+    // 2️⃣ If not active → send template first
+    if (!sessionActive) {
+      templateResponse = await sendTemplate(toClean);
+
+      await saveMessageRecord({
+        contact_id,
+        from_type: "admin",
+        to_number: toClean,
+        from_number: WABA_NUMBER,
+        message: `[TEMPLATE: ${TEMPLATE_NAME}]`,
+        message_type: "template",
+        waba_message_id:
+          templateResponse?.messages?.[0]?.id || null,
+        status: "sent"
+      });
+    }
+
+    // 3️⃣ Now send normal text message
+    const textResponse = await sendText(toClean, message);
 
     await saveMessageRecord({
       contact_id,
+      from_type: "admin",
+      to_number: toClean,
       from_number: WABA_NUMBER,
-      to_number: cleanNumber(to),
       message,
       message_type: "text",
-      waba_message_id,
+      waba_message_id:
+        textResponse?.messages?.[0]?.id || null,
+      status: "sent"
     });
 
-    // broadcast to UI
+    // 4️⃣ Emit via socket.io
     const io = req.app.get("io");
     if (io && contact_id) {
       io.to(`contact_${contact_id}`).emit("message_sent", {
         contact_id,
         from_type: "admin",
         message,
-        created_at: new Date().toISOString(),
+        to: toClean,
+        created_at: new Date().toISOString()
       });
     }
 
-    res.json({ success: true, provider: response.data });
-  } catch (err) {
-    res.status(500).json({
-      error: "Failed to send message",
-      detail: err.response?.data || err.message,
-    });
-  }
-});
-
-// =======================================================
-// 2️⃣ SEND TEMPLATE MESSAGE (WITH VARIABLES)
-// =======================================================
-router.post("/template/send", async (req, res) => {
-  const { to, templateName, variables = {}, contact_id } = req.body;
-
-  if (!to || !templateName)
-    return res.json({ error: "to & templateName required" });
-
-  const templateParams = Object.values(variables).map((v) => ({ type: "text", text: v }));
-
-  const payload = {
-    messaging_product: "whatsapp",
-    to: cleanNumber(to),
-    type: "template",
-    template: {
-      name: templateName,
-      language: { code: "en" },
-      components: [
-        {
-          type: "body",
-          parameters: templateParams,
-        },
-      ],
-    },
-  };
-
-  try {
-    const response = await axios.post(WABA_URL, payload, {
-      headers: {
-        Key: WABA_KEY,
-        wabaNumber: WABA_NUMBER,
-        //workflowId: WORKFLOW_ID,
-        //campaignId: DEFAULT_CAMPAIGN_ID,
-        "Content-Type": "application/json",
-      },
-    });
-
-    res.json({ success: true, provider: response.data });
-  } catch (err) {
-    res.status(500).json({
-      error: "Template Send Failed",
-      detail: err.response?.data || err.message,
-    });
-  }
-});
-
-// =======================================================
-// 3️⃣ UPLOAD FILE (TO GET fileId)
-// =======================================================
-
-const upload = multer({ dest: "tmp/" });
-
-router.post("/upload-file", upload.single("file"), async (req, res) => {
-  if (!req.file) return res.json({ error: "File missing" });
-
-  const form = new FormData();
-  form.append("file", fs.createReadStream(req.file.path));
-
-  try {
-    const response = await axios.post(
-      "https://voice.otechnonix.com/api/uploadFile",
-      form,
-      {
-        headers: {
-          key: WABA_KEY,
-          ...form.getHeaders(),
-        },
-      }
-    );
-
-    fs.unlinkSync(req.file.path); // delete temp file
-
     res.json({
       success: true,
-      provider: response.data,
-    });
-  } catch (err) {
-    res.status(500).json({
-      error: "File Upload Failed",
-      detail: err.response?.data || err.message,
-    });
-  }
-});
-
-// =======================================================
-// 4️⃣ CREATE CAMPAIGN (TO GET campaignId)
-// =======================================================
-router.post("/campaign/create", async (req, res) => {
-  const { campaignName, templateName, fileId, mobilenoField = 2, variables = {} } =
-    req.body;
-
-  if (!campaignName || !templateName || !fileId)
-    return res.json({ error: "campaignName, templateName & fileId required" });
-
-  const payload = {
-    campaignName,
-    templateName,
-    mobilenoField,
-    fileId,
-    variable: variables,
-    countryCode: 91,
-  };
-
-  try {
-    const response = await axios.post(
-      "https://voice.otechnonix.com/REST/createCampaign",
-      payload,
-      {
-        headers: {
-          Key: WABA_KEY,
-          wabaNumber: WABA_NUMBER,
-          "Content-Type": "application/json",
-        },
+      templateSent: !sessionActive,
+      provider: {
+        template: templateResponse,
+        text: textResponse
       }
-    );
-
-    res.json({ success: true, provider: response.data });
+    });
   } catch (err) {
+    console.log("SEND ERROR", err.response?.data || err.message);
     res.status(500).json({
-      error: "Campaign Creation Failed",
-      detail: err.response?.data || err.message,
+      success: false,
+      error: err.response?.data || err.message
     });
   }
 });
