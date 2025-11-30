@@ -77,8 +77,8 @@ router.post("/send", async (req, res) => {
       headers: {
         Key: WABA_KEY,
         wabaNumber: WABA_NUMBER,
-        workflowId: WORKFLOW_ID,
-        campaignId: DEFAULT_CAMPAIGN_ID,
+        //workflowId: WORKFLOW_ID,
+        //campaignId: DEFAULT_CAMPAIGN_ID,
         "Content-Type": "application/json",
       },
     });
@@ -147,8 +147,8 @@ router.post("/template/send", async (req, res) => {
       headers: {
         Key: WABA_KEY,
         wabaNumber: WABA_NUMBER,
-        workflowId: WORKFLOW_ID,
-        campaignId: DEFAULT_CAMPAIGN_ID,
+        //workflowId: WORKFLOW_ID,
+        //campaignId: DEFAULT_CAMPAIGN_ID,
         "Content-Type": "application/json",
       },
     });
