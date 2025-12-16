@@ -77,7 +77,7 @@ export default function Messages() {
   async function loadConversations() {
     setLoadingConvs(true);
     try {
-      const res = await fetch(`${API_BASE}/facebook/conversations`);
+      const res = await fetch(`${API_BASE}/api/facebook/conversations`)
       const json = await res.json();
       setConversations(json.data || []);
 
